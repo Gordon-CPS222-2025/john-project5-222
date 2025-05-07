@@ -7,7 +7,7 @@
 #include <iomanip>     // For formatting distance output
 
 // Constructor: Builds the highway network from input stream
-// @param in - Input stream containing network data
+
 HighwayNetwork::HighwayNetwork(std::istream& in) {
     // Read number of towns and roads from input
     int numTowns, numRoads;
@@ -34,10 +34,7 @@ HighwayNetwork::HighwayNetwork(std::istream& in) {
 }
 
 // Adds a bidirectional road between two towns
-// @param from - Name of starting town
-// @param to - Name of destination town
-// @param isBridge - Whether the road is a bridge
-// @param distance - Length of the road in miles
+
 void HighwayNetwork::addRoad(const std::string& from, const std::string& to, bool isBridge, float distance) {
     // Look up town pointers from names
     Town* fromTown = nameToTown[from];
@@ -50,4 +47,49 @@ void HighwayNetwork::addRoad(const std::string& from, const std::string& to, boo
     // Add roads to respective towns
     fromTown->addRoad(road1);
     toTown->addRoad(road2);
+}
+
+void HighwayNetwork::printNetwork() const {
+    std::cout << "The input data is:\n" << std::endl;
+
+    std::queue<Town*> toVisit;
+    std::set<std::string> visited;
+
+    toVisit.push(capital);
+    visited.insert(capital->getName());
+
+    while (!toVisit.empty()) {
+        Town* current = toVisit.front();
+        toVisit.pop();
+
+        std::cout << current->getName() << std::endl;
+
+        for (Road* road : current->getRoads()) {
+            Town* neighbor = road->getDestination();
+            std::cout << "    " << neighbor->getName() << " ";
+            std::cout << std::fixed << std::setprecision(1) << road->getDistance() << " mi";
+            if (road->getIsBridge()) {
+                std::cout << " via bridge";
+            }
+            std::cout << std::endl;
+
+            // Enqueue unvisited neighbors
+            if (visited.find(neighbor->getName()) == visited.end()) {
+                visited.insert(neighbor->getName());
+                toVisit.push(neighbor);
+            }
+        }
+    }
+
+    std::cout << std::endl;
+}
+
+HighwayNetwork::~HighwayNetwork() {
+    for (Town* town : towns) {
+        const std::vector<Road*>& roads = town->getRoads();
+        for (Road* road : roads) {
+            delete road;
+        }
+        delete town;
+    }
 }
