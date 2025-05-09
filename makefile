@@ -1,30 +1,23 @@
-# Makefile for CPS 222 Project 5
-# Folder: john-project5-222
-
+# Compiler and flags
 CXX = g++
 CXXFLAGS = -std=c++17 -Wall -Wextra -g
 
 # Source and object files
-SRCS = main.cc Town.cc Road.cc HighWayNetwork.cc
+SRCS = Main.cc Town.cc Road.cc HighWayNetwork.cc
 OBJS = $(SRCS:.cc=.o)
 
-# Executable name
+# Executable name 
 TARGET = project5
 
 # Default build rule
 all: $(TARGET)
 
 $(TARGET): $(OBJS)
-	$(CXX) $(CXXFLAGS) -o $(TARGET) $(OBJS)
+	$(CXX) $(CXXFLAGS) -o $(TARGET) $(OBJS)  # <-- TAB at start of line
 
 %.o: %.cc
-	$(CXX) $(CXXFLAGS) -c $< -o $@
-
-# Test rule (update input/output files accordingly)
-test: $(TARGET)
-	./$(TARGET) < t01-input.in > t01-output.out
-	@echo "Test complete. Output saved to t01-output.out"
+	$(CXX) $(CXXFLAGS) -c $< -o $@  # <-- TAB at start of line
 
 # Clean rule
 clean:
-	rm -f $(TARGET) *.o *.out
+	rm -f $(TARGET) $(OBJS) *~ *.out  # <-- TAB at start of line

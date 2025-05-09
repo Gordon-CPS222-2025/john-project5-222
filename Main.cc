@@ -10,9 +10,9 @@ bool eof(std::istream& in) {
 }
 
 int main() {
-    while (!eof(std::cin)) {
+        std::cout << "Reading network..." << std::endl;
         HighwayNetwork network(std::cin);
+        std::cout << "Network read successfully." << std::endl;
         network.printNetwork();
-    }
     return 0;
 }
