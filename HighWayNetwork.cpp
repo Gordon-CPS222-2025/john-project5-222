@@ -5,6 +5,7 @@
 #include <set>       
 #include <iostream>    
 #include <iomanip>     
+#include <unordered_set>
 
 // Constructor: Builds the highway network from input stream
 
@@ -87,7 +88,7 @@ void HighwayNetwork::printNetwork() const {
 }
 
 void HighwayNetwork::printUpgrades() const {
-    std::cout << "The road upgrading goal can be achieved at minimal cost by upgrading:\n";
+    std::cout << "The road upgrading goal can be achieved at minimal cost by upgrading:\n" << std::endl;
     for (Town* town : towns) {
         for (Road* road : town->getRoads()) {
             // Suggest upgrading bridges or roads longer than 5 miles
@@ -151,6 +152,33 @@ void HighwayNetwork::printShortestPaths() const {
         }
         std::cout << "\n";
     }
+}
+
+void HighwayNetwork::printCriticalLinks() const {
+    std::cout << "Critical bridges (single-point-of-failure links):\n";
+    for (Town* town : towns) {
+        for (Road* road : town->getRoads()) {
+            if (road->getIsBridge()) {
+                std::cout << town->getName() << " -- " 
+                          << road->getDestination()->getName() << "\n";
+            }
+        }
+    }
+}
+
+void HighwayNetwork::printComponents() const {
+    std::unordered_set<Town*> visited;
+    int component = 1;
+
+    for (Town* town : towns) {
+        if (visited.find(town) == visited.end()) {
+            std::queue<Town*> q;
+            q.push(town);
+            visited.insert(town);
+
+            std::cout << "Component " << component++ << ":\n";
+            while (!q.empty()) {
+  
 }
  
 
