@@ -86,6 +86,21 @@ void HighwayNetwork::printNetwork() const {
     std::cout << std::endl;
 }
 
+void HighwayNetwork::printUpgrades() const {
+    std::cout << "The road upgrading goal can be achieved at minimal cost by upgrading:\n";
+    for (Town* town : towns) {
+        for (Road* road : town->getRoads()) {
+            // Suggest upgrading bridges or roads longer than 5 miles
+            if (road->getIsBridge() || road->getDistance() > 5.0f) {
+                std::cout << "Upgrade road from " << town->getName() << " to "
+                          << road->getDestination()->getName() << " ("
+                          << road->getDistance() << " mi)"
+                          << (road->getIsBridge() ? " [BRIDGE]" : "") << "\n";
+            }
+        }
+    }
+}
+
 void HighwayNetwork::printShortestPaths() const {
     std::unordered_map<Town*, float> dist;
     std::unordered_map<Town*, Town*> prev;
