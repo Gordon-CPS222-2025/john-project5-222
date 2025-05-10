@@ -29,6 +29,10 @@ public:
      * Each road is printed under both connected towns.
      */
     void printNetwork() const;
+    void printShortestPaths() const;
+    void printUpgrades() const;
+    void printComponents() const;
+    void printCriticalLinks() const;
 
 private:
     std::vector<Town*> towns;

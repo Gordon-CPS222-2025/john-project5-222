@@ -1,10 +1,10 @@
 // Include necessary headers
 #include "HighWayNetwork.h"
 #include "Road.h"
-#include <queue>       // For BFS traversal
-#include <set>         // For tracking visited towns
-#include <iostream>    // For output
-#include <iomanip>     // For formatting distance output
+#include <queue>      
+#include <set>       
+#include <iostream>    
+#include <iomanip>     
 
 // Constructor: Builds the highway network from input stream
 
@@ -18,9 +18,9 @@ HighwayNetwork::HighwayNetwork(std::istream& in) {
     for (int i = 0; i < numTowns; ++i) {
         in >> townName;
         Town* town = new Town(townName);
-        if (i == 0) capital = town;  // First town is treated as capital
-        towns.push_back(town);        // Add to towns collection
-        nameToTown[townName] = town;  // Map name to town pointer
+        if (i == 0) capital = town;  
+        towns.push_back(town);        
+        nameToTown[townName] = town;  
     }
 
     // Read and create all road connections
@@ -29,7 +29,7 @@ HighwayNetwork::HighwayNetwork(std::istream& in) {
     float distance;
     for (int i = 0; i < numRoads; ++i) {
         in >> from >> to >> bridgeFlag >> distance;
-        addRoad(from, to, bridgeFlag == 'B', distance);  // 'B' indicates bridge
+        addRoad(from, to, bridgeFlag == 'B', distance);  
     }
 }
 
@@ -81,7 +81,38 @@ void HighwayNetwork::printNetwork() const {
         }
     }
 
+    
+
     std::cout << std::endl;
+}
+
+void HighwayNetwork::printShortestPaths() const {
+    std::unordered_map<Town*, float> dist;
+    std::unordered_map<Town*, Town*> prev;
+    std::priority_queue<std::pair<float, Town*>, std::vector<std::pair<float, Town*>>, std::greater<>> pq;
+
+    // Initialize distances
+    for (Town* town : towns) {
+        dist[town] = std::numeric_limits<float>::max();
+    }
+    dist[capital] = 0.0f;
+    pq.push({0.0f, capital});
+
+    while (!pq.empty()) {
+        auto [currentDist, current] = pq.top();
+        pq.pop();
+
+        for (Road* road : current->getRoads()) {
+            Town* neighbor = road->getDestination();
+            float newDist = currentDist + road->getDistance();
+            if (newDist < dist[neighbor]) {
+                dist[neighbor] = newDist;
+                prev[neighbor] = current;
+                pq.push({newDist, neighbor});
+            }
+        }
+    }
+
 }
 
 HighwayNetwork::~HighwayNetwork() {

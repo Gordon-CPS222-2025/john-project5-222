@@ -1,18 +1,24 @@
 #include "HighWayNetwork.h"
 #include <iostream>
-
-bool eof(std::istream& in) {
-    char c;
-    in >> std::ws;
-    if (in.eof()) return true;
-    in.unget();
-    return false;
-}
-
 int main() {
-        std::cout << "Reading network..." << std::endl;
         HighwayNetwork network(std::cin);
-        std::cout << "Network read successfully." << std::endl;
-        network.printNetwork();
+
+    std::cout << "The input data is:\n" << std::endl;
+    network.printNetwork();
+
+    std::cout << "\nThe shortest paths from NOWHERESVILLE are:\n" << std::endl;
+    network.printShortestPaths();
+
+    std::cout << "\nThe road upgrading goal can be achieved at minimal cost by upgrading:\n" << std::endl;
+    network.printUpgrades();
+
+    std::cout << "\nConnected components in event of a major storm are:\n";
+    std::cout << "   If all bridges fail, the following towns would form an isolated group:\n";
+    network.printComponents();
+
+    std::cout << "\nDestruction of any of the following would result in the province becoming\ndisconnected:\n";
+    network.printCriticalLinks();
+
+    std::cout << std::endl << std::endl << "------------------------------------------------------------------" << std::endl;
     return 0;
 }
