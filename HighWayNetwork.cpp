@@ -91,7 +91,6 @@ void HighwayNetwork::printShortestPaths() const {
     std::unordered_map<Town*, Town*> prev;
     std::priority_queue<std::pair<float, Town*>, std::vector<std::pair<float, Town*>>, std::greater<>> pq;
 
-    // Initialize distances
     for (Town* town : towns) {
         dist[town] = std::numeric_limits<float>::max();
     }
@@ -113,7 +112,32 @@ void HighwayNetwork::printShortestPaths() const {
         }
     }
 
+    std::cout << "The shortest paths from " << capital->getName() << " are:\n";
+    for (Town* town : towns) {
+        if (town == capital) continue;
+
+        if (dist[town] == std::numeric_limits<float>::max()) {
+            std::cout << "No path from " << capital->getName() << " to "
+                      << town->getName() << ".\n\n";
+            continue;
+        }
+
+        std::vector<std::string> path;
+        for (Town* at = town; at != nullptr; at = prev[at]) {
+            path.push_back(at->getName());
+        }
+        std::reverse(path.begin(), path.end());
+
+        std::cout << "The shortest path from " << capital->getName() << " to "
+                  << town->getName() << " is " << std::fixed << std::setprecision(1)
+                  << dist[town] << " mi:\n";
+        for (const auto& name : path) {
+            std::cout << name << "\n";
+        }
+        std::cout << "\n";
+    }
 }
+ 
 
 HighwayNetwork::~HighwayNetwork() {
     for (Town* town : towns) {
