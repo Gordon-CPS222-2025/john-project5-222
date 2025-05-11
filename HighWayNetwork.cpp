@@ -1,16 +1,21 @@
 // Include necessary headers
 #include "HighWayNetwork.h"
 #include "Road.h"
-#include <queue>      
-#include <set>       
+#include <queue>     
+#include <set>        
 #include <iostream>    
-#include <iomanip>     
-#include <unordered_set>
-#include "DisjointSet.h"
+#include <iomanip>   
+#include <unordered_set>  
+#include "DisjointSet.h" 
 
-
-// Constructor: Builds the highway network from input stream
-
+/**
+ * Constructor: Builds the highway network from input stream
+ * 
+ * @param in Input stream containing network data in the format:
+ *        - First line: numTowns numRoads
+ *        - Next numTowns lines: town names
+ *        - Next numRoads lines: fromTown toTown bridgeFlag(B/R) distance
+ */
 HighwayNetwork::HighwayNetwork(std::istream& in) {
     // Read number of towns and roads from input
     int numTowns, numRoads;
@@ -21,9 +26,9 @@ HighwayNetwork::HighwayNetwork(std::istream& in) {
     for (int i = 0; i < numTowns; ++i) {
         in >> townName;
         Town* town = new Town(townName);
-        if (i == 0) capital = town;  
-        towns.push_back(town);        
-        nameToTown[townName] = town;  
+        if (i == 0) capital = town;  // First town is designated as the capital
+        towns.push_back(town);        // Store town in vector for sequential access
+        nameToTown[townName] = town;  // Map town name to Town object for quick lookup
     }
 
     // Read and create all road connections
@@ -32,34 +37,55 @@ HighwayNetwork::HighwayNetwork(std::istream& in) {
     float distance;
     for (int i = 0; i < numRoads; ++i) {
         in >> from >> to >> bridgeFlag >> distance;
-        addRoad(from, to, bridgeFlag == 'B', distance);  
+        addRoad(from, to, bridgeFlag == 'B', distance);  // 'B' indicates a bridge
     }
 }
 
-// Adds a bidirectional road between two towns
-
+/**
+ * Adds a bidirectional road between two towns
+ * 
+ * @param from Source town name
+ * @param to Destination town name
+ * @param isBridge Flag indicating if the road includes a bridge
+ * @param distance Length of the road in miles
+ * 
+ * Creates two Road objects to represent the bidirectional connection
+ */
 void HighwayNetwork::addRoad(const std::string& from, const std::string& to, bool isBridge, float distance) {
+    // Validate that both town names exist in our network
     if (nameToTown.find(from) == nameToTown.end() || nameToTown.find(to) == nameToTown.end()) {
         std::cerr << "Error: Town name not found in map: " << from << " or " << to << std::endl;
         return;  // or throw exception
     }
 
+    // Get Town pointers from the name map
     Town* fromTown = nameToTown.at(from);
     Town* toTown = nameToTown.at(to);
 
+    // Create bidirectional roads (two Road objects pointing in opposite directions)
     Road* road1 = new Road(toTown, distance, isBridge);
     Road* road2 = new Road(fromTown, distance, isBridge);
 
+    // Add roads to their respective source towns
     fromTown->addRoad(road1);
     toTown->addRoad(road2);
 }
 
-
+/**
+ * Prints the entire network using BFS traversal starting from the capital
+ * 
+ * Output format:
+ * TownName
+ *     NeighborName1 distance 
+ *     NeighborName2 distance
+ *     ...
+ */
 void HighwayNetwork::printNetwork() const {
-
+    // Use BFS to visit all towns starting from the capital
     std::queue<Town*> toVisit;
     std::set<std::string> visited;
 
+    // Start BFS from the capital
     toVisit.push(capital);
     visited.insert(capital->getName());
 
@@ -67,8 +93,10 @@ void HighwayNetwork::printNetwork() const {
         Town* current = toVisit.front();
         toVisit.pop();
 
+        // Print current town name
         std::cout << current->getName() << std::endl;
 
+        // Print all roads from the current town
         for (Road* road : current->getRoads()) {
             Town* neighbor = road->getDestination();
             std::cout << "    " << neighbor->getName() << " ";
@@ -78,7 +106,7 @@ void HighwayNetwork::printNetwork() const {
             }
             std::cout << std::endl;
 
-            // Enqueue unvisited neighbors
+            // Enqueue unvisited neighbors to continue BFS
             if (visited.find(neighbor->getName()) == visited.end()) {
                 visited.insert(neighbor->getName());
                 toVisit.push(neighbor);
@@ -86,49 +114,73 @@ void HighwayNetwork::printNetwork() const {
         }
     }
 
-    
-
     std::cout << std::endl;
 }
 
+/**
+ * Prints all roads that need upgrades
+ * Uses a set to track already processed roads 
+ */
 void HighwayNetwork::printUpgrades() const {
+    // Track seen road pairs to avoid duplicates 
     std::set<std::pair<std::string, std::string>> seen;
     bool found = false;
+    
+    // Iterate through all towns and their roads
     for (Town* town : towns) {
         for (Road* road : town->getRoads()) {
             Town* dest = road->getDestination();
+            
+            // Create a canonical representation of the road pair (smaller name first)
             std::string nameA = town->getName();
             std::string nameB = dest->getName();
             if (nameA > nameB) std::swap(nameA, nameB);
+            
+            // If this road hasn't been seen before, print it as an upgrade candidate
             if (seen.insert({nameA, nameB}).second) {
                 std::cout << "    " << nameB << " to " << nameA << std::endl;
                 found = true;
             }
         }
     }
+    
     if (!found) {
         std::cout << "    (None)" << std::endl;
     }
 }
 
+/**
+ * Prints shortest paths from the capital to all other towns
+ * Uses Dijkstra's algorithm to find the shortest paths
+ */
 void HighwayNetwork::printShortestPaths() const {
+    // Distance map: stores shortest distance found from capital to each town
     std::unordered_map<Town*, float> dist;
+    // Previous town map: for reconstructing the path
     std::unordered_map<Town*, Town*> prev;
+    // Min priority queue for Dijkstra's algorithm, pairs are {distance, town}
     std::priority_queue<std::pair<int, Town*>, std::vector<std::pair<int, Town*>>, std::greater<>> pq;
 
+    // Initialize distances to infinity
     for (Town* town : towns) {
         dist[town] = std::numeric_limits<int>::max();
     }
+    
+    // Start from capital with distance 0
     dist[capital] = 0.0f;
     pq.push({0.0f, capital});
 
+    // Dijkstra's algorithm main loop
     while (!pq.empty()) {
         auto [currentDist, current] = pq.top();
         pq.pop();
 
+        // Process all neighbors of the current town
         for (Road* road : current->getRoads()) {
             Town* neighbor = road->getDestination();
             float newDist = currentDist + road->getDistance();
+            
+            // If we found a shorter path to this neighbor
             if (newDist < dist[neighbor]) {
                 dist[neighbor] = newDist;
                 prev[neighbor] = current;
@@ -137,21 +189,26 @@ void HighwayNetwork::printShortestPaths() const {
         }
     }
 
+    // Print paths from capital to all other towns
     for (Town* town : towns) {
-        if (town == capital) continue;
+        if (town == capital) continue;  // Skip the capital itself
 
+        // If no path exists
         if (dist[town] == std::numeric_limits<int>::max()) {
             std::cout << "No path from " << capital->getName() << " to "
                       << town->getName() << ".\n\n";
             continue;
         }
 
+        // Reconstruct the path from destination to source
         std::vector<std::string> path;
         for (Town* at = town; at != nullptr; at = prev[at]) {
             path.push_back(at->getName());
         }
+        // Reverse to get source to destination order
         std::reverse(path.begin(), path.end());
 
+        // Print the path details
         std::cout << "The shortest path from " << capital->getName() << " to "
                   << town->getName() << " is " << std::fixed << std::setprecision(1)
                   << dist[town] << " mi:\n";
@@ -162,9 +219,18 @@ void HighwayNetwork::printShortestPaths() const {
     }
 }
 
+/**
+ * Prints all critical links (bridges) whose removal would disconnect the network
+ * 
+ * In this implementation, critical links are simply the roads marked as bridges
+ */
 void HighwayNetwork::printCriticalLinks() const {
+    std::cout << "\nDestruction of any of the following would result in the province becoming\ndisconnected:\n";
+    
+    // Iterate through all towns and their roads
     for (Town* town : towns) {
         for (Road* road : town->getRoads()) {
+            // Only print bridges as critical links
             if (road->getIsBridge()) {
                 std::cout << town->getName() << " -- " 
                           << road->getDestination()->getName() << "\n";
@@ -173,11 +239,17 @@ void HighwayNetwork::printCriticalLinks() const {
     }
 }
 
+/**
+ * Prints connected components that would form if all bridges were removed
+ * Uses BFS to identify components, ignoring bridge roads
+ */
 void HighwayNetwork::printComponents() const {
     std::unordered_set<Town*> visited;
     int component = 1;
 
+    // Iterate through all towns
     for (Town* town : towns) {
+        // If this town hasn't been visited, it belongs to a new component
         if (visited.find(town) == visited.end()) {
             std::queue<Town*> q;
             q.push(town);
@@ -185,6 +257,7 @@ void HighwayNetwork::printComponents() const {
 
             std::cout << "If all bridges fail, the following towns would form an isolated group:\n";
 
+            // BFS to find all towns in this component
             while (!q.empty()) {
                 Town* current = q.front();
                 q.pop();
@@ -206,9 +279,80 @@ void HighwayNetwork::printComponents() const {
     }
 }
 
- 
+/**
+ * Prints critical towns (articulation points) whose removal would disconnect the network
+ * Uses DFS-based algorithm to identify articulation points
+ */
+void HighwayNetwork::printCriticalTowns() const {
+    std::cout << "\nDestruction of any of the following would result in the province becoming\ndisconnected:\n";
+    
+    // Maps for tracking DFS information
+    std::unordered_map<Town*, int> discoveryTime;  // When a node was discovered
+    std::unordered_map<Town*, int> low;            // Lowest discovery time reachable
+    std::unordered_map<Town*, Town*> parent;       // Parent in DFS tree
+    std::unordered_set<Town*> articulationPoints;  // Stored articulation points
+    
+    int time = 0;  // Global time counter for DFS
 
+    // Recursive DFS function to find articulation points
+    std::function<void(Town*)> dfs = [&](Town* u) {
+        // Initialize discovery time and low value
+        discoveryTime[u] = low[u] = ++time;
+        int children = 0;  // Count of children in DFS tree
+
+        // Visit all neighbors
+        for (Road* road : u->getRoads()) {
+            Town* v = road->getDestination();
+            
+            // If v is not visited yet
+            if (discoveryTime.find(v) == discoveryTime.end()) {
+                parent[v] = u;
+                ++children;
+                dfs(v);  // Recursive DFS
+
+                // Update low value of u based on its children
+                low[u] = std::min(low[u], low[v]);
+
+                // Check if u is an articulation point:
+                // 1. U is root of DFS tree and has multiple children
+                // 2. U is not root and low value of one of its children >= discovery time of u
+                if ((parent.find(u) == parent.end() && children > 1) ||
+                    (parent.find(u) != parent.end() && low[v] >= discoveryTime[u])) {
+                    articulationPoints.insert(u);
+                }
+            } else if (v != parent[u]) {
+                // Update low value for back edges
+                low[u] = std::min(low[u], discoveryTime[v]);
+            }
+        }
+    };
+
+    // Run DFS for each unvisited town
+    for (Town* town : towns) {
+        if (discoveryTime.find(town) == discoveryTime.end()) {
+            dfs(town);
+        }
+    }
+
+    // Print the articulation points
+    std::cout << "Destruction of any of the following would result in the province becoming\n";
+    std::cout << "disconnected:\n";
+
+    if (articulationPoints.empty()) {
+        std::cout << "    (None)\n";
+    } else {
+        for (Town* town : articulationPoints) {
+            std::cout << "    " << town->getName() << "\n";
+        }
+    }
+}
+
+/**
+ * Destructor: Clean up all dynamically allocated memory
+ * Deletes all Town and Road objects
+ */
 HighwayNetwork::~HighwayNetwork() {
+    // First delete all Road objects, then delete Town objects
     for (Town* town : towns) {
         const std::vector<Road*>& roads = town->getRoads();
         for (Road* road : roads) {
