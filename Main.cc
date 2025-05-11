@@ -15,8 +15,11 @@ int main() {
     std::cout << "   If all bridges fail, the following towns would form an isolated group:\n";
     network.printComponents();
 
-    std::cout << "\nDestruction of any of the following would result in the province becoming\ndisconnected:\n";
     network.printCriticalLinks();
+
+    network.printCriticalTowns();
+
+
 
 
     std::cout << std::endl << std::endl << "------------------------------------------------------------------" << std::endl;

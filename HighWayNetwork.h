@@ -33,6 +33,7 @@ public:
     void printUpgrades() const;
     void printComponents() const;
     void printCriticalLinks() const;
+    void printCriticalTowns() const;
 
 private:
     std::vector<Town*> towns;

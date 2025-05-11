@@ -280,7 +280,7 @@ void HighwayNetwork::printComponents() const {
 }
 
 /**
- * Prints critical towns (articulation points) whose removal would disconnect the network
+ * Prints critical towns  whose removal would disconnect the network
  * Uses DFS-based algorithm to identify articulation points
  */
 void HighwayNetwork::printCriticalTowns() const {
