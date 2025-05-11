@@ -42,7 +42,7 @@ private:
     /**
      * Adds a two-way road between two towns.
      */
-    void addRoad(const std::string& from, const std::string& to, bool isBridge, int distance);
+    void addRoad(const std::string& from, const std::string& to, bool isBridge, float distance);
 };
 
 #endif  // HIGHWAY_NETWORK_H

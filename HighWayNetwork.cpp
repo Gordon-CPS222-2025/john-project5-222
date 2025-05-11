@@ -29,7 +29,7 @@ HighwayNetwork::HighwayNetwork(std::istream& in) {
     // Read and create all road connections
     std::string from, to;
     char bridgeFlag;
-    int distance;
+    float distance;
     for (int i = 0; i < numRoads; ++i) {
         in >> from >> to >> bridgeFlag >> distance;
         addRoad(from, to, bridgeFlag == 'B', distance);  
@@ -38,19 +38,22 @@ HighwayNetwork::HighwayNetwork(std::istream& in) {
 
 // Adds a bidirectional road between two towns
 
-void HighwayNetwork::addRoad(const std::string& from, const std::string& to, bool isBridge, int distance) {
-    // Look up town pointers from names
-    Town* fromTown = nameToTown[from];
-    Town* toTown = nameToTown[to];
+void HighwayNetwork::addRoad(const std::string& from, const std::string& to, bool isBridge, float distance) {
+    if (nameToTown.find(from) == nameToTown.end() || nameToTown.find(to) == nameToTown.end()) {
+        std::cerr << "Error: Town name not found in map: " << from << " or " << to << std::endl;
+        return;  // or throw exception
+    }
 
-    // Create two road objects (one for each direction)
+    Town* fromTown = nameToTown.at(from);
+    Town* toTown = nameToTown.at(to);
+
     Road* road1 = new Road(toTown, distance, isBridge);
     Road* road2 = new Road(fromTown, distance, isBridge);
 
-    // Add roads to respective towns
     fromTown->addRoad(road1);
     toTown->addRoad(road2);
 }
+
 
 void HighwayNetwork::printNetwork() const {
 
@@ -109,14 +112,14 @@ void HighwayNetwork::printUpgrades() const {
 }
 
 void HighwayNetwork::printShortestPaths() const {
-    std::unordered_map<Town*, int> dist;
+    std::unordered_map<Town*, float> dist;
     std::unordered_map<Town*, Town*> prev;
     std::priority_queue<std::pair<int, Town*>, std::vector<std::pair<int, Town*>>, std::greater<>> pq;
 
     for (Town* town : towns) {
         dist[town] = std::numeric_limits<int>::max();
     }
-    dist[capital] = 0;
+    dist[capital] = 0.0f;
     pq.push({0.0f, capital});
 
     while (!pq.empty()) {
@@ -125,7 +128,7 @@ void HighwayNetwork::printShortestPaths() const {
 
         for (Road* road : current->getRoads()) {
             Town* neighbor = road->getDestination();
-            int newDist = currentDist + road->getDistance();
+            float newDist = currentDist + road->getDistance();
             if (newDist < dist[neighbor]) {
                 dist[neighbor] = newDist;
                 prev[neighbor] = current;
@@ -180,17 +183,21 @@ void HighwayNetwork::printComponents() const {
             q.push(town);
             visited.insert(town);
 
-            //std::cout << "Component " << component++ << ":\n";
+            std::cout << "If all bridges fail, the following towns would form an isolated group:\n";
+
             while (!q.empty()) {
                 Town* current = q.front();
                 q.pop();
-                std::cout << " If all bridges fail, the following towns would form an isolated group:\n";
                 std::cout << current->getName() << "\n";
+
+                // Only consider roads that are not bridges
                 for (Road* road : current->getRoads()) {
-                    Town* neighbor = road->getDestination();
-                    if (visited.find(neighbor) == visited.end()) {
-                        visited.insert(neighbor);
-                        q.push(neighbor);
+                    if (!road->getIsBridge()) {  // Ignore roads with bridges
+                        Town* neighbor = road->getDestination();
+                        if (visited.find(neighbor) == visited.end()) {
+                            visited.insert(neighbor);
+                            q.push(neighbor);
+                        }
                     }
                 }
             }
@@ -198,6 +205,7 @@ void HighwayNetwork::printComponents() const {
         }
     }
 }
+
  
 
 HighwayNetwork::~HighwayNetwork() {
