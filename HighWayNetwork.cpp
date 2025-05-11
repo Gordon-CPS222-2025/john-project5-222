@@ -6,6 +6,8 @@
 #include <iostream>    
 #include <iomanip>     
 #include <unordered_set>
+#include "DisjointSet.h"
+
 
 // Constructor: Builds the highway network from input stream
 
