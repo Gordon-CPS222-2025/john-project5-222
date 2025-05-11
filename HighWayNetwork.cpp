@@ -89,12 +89,16 @@ void HighwayNetwork::printNetwork() const {
 }
 
 void HighwayNetwork::printUpgrades() const {
+    std::set<std::pair<std::string, std::string>> seen;
     bool found = false;
     for (Town* town : towns) {
         for (Road* road : town->getRoads()) {
             Town* dest = road->getDestination();
-            if (town->getName() < dest->getName()) {
-                std::cout << "    " << dest->getName() << " to " << town->getName() << std::endl;
+            std::string nameA = town->getName();
+            std::string nameB = dest->getName();
+            if (nameA > nameB) std::swap(nameA, nameB);
+            if (seen.insert({nameA, nameB}).second) {
+                std::cout << "    " << nameB << " to " << nameA << std::endl;
                 found = true;
             }
         }
@@ -180,8 +184,8 @@ void HighwayNetwork::printComponents() const {
             while (!q.empty()) {
                 Town* current = q.front();
                 q.pop();
+                std::cout << " If all bridges fail, the following towns would form an isolated group:\n";
                 std::cout << current->getName() << "\n";
-
                 for (Road* road : current->getRoads()) {
                     Town* neighbor = road->getDestination();
                     if (visited.find(neighbor) == visited.end()) {

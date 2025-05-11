@@ -11,7 +11,9 @@ private:
 
 public:
 void makeSet(const std::vector<Town*>& towns);
-void unite(Town* a, Town* b);
+Town *find(Town *town);
+void unite(Town *a, Town *b);
+bool connected(Town* a, Town* b);
 };
 
 #endif // DISJOINT_SET_H
