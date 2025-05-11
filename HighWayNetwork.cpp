@@ -27,7 +27,7 @@ HighwayNetwork::HighwayNetwork(std::istream& in) {
     // Read and create all road connections
     std::string from, to;
     char bridgeFlag;
-    float distance;
+    int distance;
     for (int i = 0; i < numRoads; ++i) {
         in >> from >> to >> bridgeFlag >> distance;
         addRoad(from, to, bridgeFlag == 'B', distance);  
@@ -36,7 +36,7 @@ HighwayNetwork::HighwayNetwork(std::istream& in) {
 
 // Adds a bidirectional road between two towns
 
-void HighwayNetwork::addRoad(const std::string& from, const std::string& to, bool isBridge, float distance) {
+void HighwayNetwork::addRoad(const std::string& from, const std::string& to, bool isBridge, int distance) {
     // Look up town pointers from names
     Town* fromTown = nameToTown[from];
     Town* toTown = nameToTown[to];
@@ -51,7 +51,6 @@ void HighwayNetwork::addRoad(const std::string& from, const std::string& to, boo
 }
 
 void HighwayNetwork::printNetwork() const {
-    std::cout << "The input data is:\n" << std::endl;
 
     std::queue<Town*> toVisit;
     std::set<std::string> visited;
@@ -88,29 +87,30 @@ void HighwayNetwork::printNetwork() const {
 }
 
 void HighwayNetwork::printUpgrades() const {
-    std::cout << "The road upgrading goal can be achieved at minimal cost by upgrading:\n" << std::endl;
+    bool found = false;
     for (Town* town : towns) {
         for (Road* road : town->getRoads()) {
-            // Suggest upgrading bridges or roads longer than 5 miles
-            if (road->getIsBridge() || road->getDistance() > 5.0f) {
-                std::cout << "Upgrade road from " << town->getName() << " to "
-                          << road->getDestination()->getName() << " ("
-                          << road->getDistance() << " mi)"
-                          << (road->getIsBridge() ? " [BRIDGE]" : "") << "\n";
+            Town* dest = road->getDestination();
+            if (town->getName() < dest->getName()) {
+                std::cout << "    " << dest->getName() << " to " << town->getName() << std::endl;
+                found = true;
             }
         }
+    }
+    if (!found) {
+        std::cout << "    (None)" << std::endl;
     }
 }
 
 void HighwayNetwork::printShortestPaths() const {
-    std::unordered_map<Town*, float> dist;
+    std::unordered_map<Town*, int> dist;
     std::unordered_map<Town*, Town*> prev;
-    std::priority_queue<std::pair<float, Town*>, std::vector<std::pair<float, Town*>>, std::greater<>> pq;
+    std::priority_queue<std::pair<int, Town*>, std::vector<std::pair<int, Town*>>, std::greater<>> pq;
 
     for (Town* town : towns) {
-        dist[town] = std::numeric_limits<float>::max();
+        dist[town] = std::numeric_limits<int>::max();
     }
-    dist[capital] = 0.0f;
+    dist[capital] = 0;
     pq.push({0.0f, capital});
 
     while (!pq.empty()) {
@@ -119,7 +119,7 @@ void HighwayNetwork::printShortestPaths() const {
 
         for (Road* road : current->getRoads()) {
             Town* neighbor = road->getDestination();
-            float newDist = currentDist + road->getDistance();
+            int newDist = currentDist + road->getDistance();
             if (newDist < dist[neighbor]) {
                 dist[neighbor] = newDist;
                 prev[neighbor] = current;
@@ -128,11 +128,10 @@ void HighwayNetwork::printShortestPaths() const {
         }
     }
 
-    std::cout << "The shortest paths from " << capital->getName() << " are:\n";
     for (Town* town : towns) {
         if (town == capital) continue;
 
-        if (dist[town] == std::numeric_limits<float>::max()) {
+        if (dist[town] == std::numeric_limits<int>::max()) {
             std::cout << "No path from " << capital->getName() << " to "
                       << town->getName() << ".\n\n";
             continue;
@@ -155,7 +154,6 @@ void HighwayNetwork::printShortestPaths() const {
 }
 
 void HighwayNetwork::printCriticalLinks() const {
-    std::cout << "Critical bridges (single-point-of-failure links):\n";
     for (Town* town : towns) {
         for (Road* road : town->getRoads()) {
             if (road->getIsBridge()) {
@@ -176,9 +174,23 @@ void HighwayNetwork::printComponents() const {
             q.push(town);
             visited.insert(town);
 
-            std::cout << "Component " << component++ << ":\n";
+            //std::cout << "Component " << component++ << ":\n";
             while (!q.empty()) {
-  
+                Town* current = q.front();
+                q.pop();
+                std::cout << current->getName() << "\n";
+
+                for (Road* road : current->getRoads()) {
+                    Town* neighbor = road->getDestination();
+                    if (visited.find(neighbor) == visited.end()) {
+                        visited.insert(neighbor);
+                        q.push(neighbor);
+                    }
+                }
+            }
+            std::cout << "\n";
+        }
+    }
 }
  
 

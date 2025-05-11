@@ -12,7 +12,7 @@ public:
     /**
      * Constructs a road to the given destination town with distance and bridge flag.
      */
-    Road(Town* destination, float distance, bool isBridge);
+    Road(Town* destination, int distance, bool isBridge);
 
     /**
      * Returns the destination town this road leads to.
@@ -22,7 +22,7 @@ public:
     /**
      * Returns the distance of the road in miles.
      */
-    float getDistance() const;
+    int getDistance() const;
 
     /**
      * Returns true if the road is a bridge, false otherwise.
@@ -31,7 +31,7 @@ public:
 
 private:
     Town* destination;
-    float distance;
+    int distance;
     bool isBridge;
 };
 
