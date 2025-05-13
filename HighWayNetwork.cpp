@@ -181,14 +181,7 @@ void HighwayNetwork::printShortestPaths() const {
             float newDist = currentDist + road->getDistance();
             
             // If we found a shorter path to this neighbor
-            if (newDist < dist[neighbor]) {
-                dist[neighbor] = newDist;
-                prev[neighbor] = current;
-                pq.push({newDist, neighbor});
-            }
-        }
-    }
-
+     
     // Print paths from capital to all other towns
     for (Town* town : towns) {
         if (town == capital) continue;  // Skip the capital itself
