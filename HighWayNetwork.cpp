@@ -26,9 +26,9 @@ HighwayNetwork::HighwayNetwork(std::istream& in) {
     for (int i = 0; i < numTowns; ++i) {
         in >> townName;
         Town* town = new Town(townName);
-        if (i == 0) capital = town;  // First town is designated as the capital
-        towns.push_back(town);        // Store town in vector for sequential access
-        nameToTown[townName] = town;  // Map town name to Town object for quick lookup
+        if (i == 0) capital = town; 
+        towns.push_back(town);        
+        nameToTown[townName] = town;  
     }
 
     // Read and create all road connections
@@ -73,12 +73,7 @@ void HighwayNetwork::addRoad(const std::string& from, const std::string& to, boo
 
 /**
  * Prints the entire network using BFS traversal starting from the capital
- * 
- * Output format:
- * TownName
- *     NeighborName1 distance 
- *     NeighborName2 distance
- *     ...
+ *
  */
 void HighwayNetwork::printNetwork() const {
     // Use BFS to visit all towns starting from the capital
@@ -154,11 +149,8 @@ void HighwayNetwork::printUpgrades() const {
  * Uses Dijkstra's algorithm to find the shortest paths
  */
 void HighwayNetwork::printShortestPaths() const {
-    // Distance map: stores shortest distance found from capital to each town
     std::unordered_map<Town*, float> dist;
-    // Previous town map: for reconstructing the path
     std::unordered_map<Town*, Town*> prev;
-    // Min priority queue for Dijkstra's algorithm, pairs are {distance, town}
     std::priority_queue<std::pair<int, Town*>, std::vector<std::pair<int, Town*>>, std::greater<>> pq;
 
     // Initialize distances to infinity
@@ -181,7 +173,14 @@ void HighwayNetwork::printShortestPaths() const {
             float newDist = currentDist + road->getDistance();
             
             // If we found a shorter path to this neighbor
-     
+            if (newDist < dist[neighbor]) {
+                dist[neighbor] = newDist;
+                prev[neighbor] = current;
+                pq.push({newDist, neighbor});
+            }
+        }
+    }
+
     // Print paths from capital to all other towns
     for (Town* town : towns) {
         if (town == capital) continue;  // Skip the capital itself
@@ -234,7 +233,7 @@ void HighwayNetwork::printCriticalLinks() const {
 
 /**
  * Prints connected components that would form if all bridges were removed
- * Uses BFS to identify components, ignoring bridge roads
+ * 
  */
 void HighwayNetwork::printComponents() const {
     std::unordered_set<Town*> visited;
@@ -274,18 +273,17 @@ void HighwayNetwork::printComponents() const {
 
 /**
  * Prints critical towns  whose removal would disconnect the network
- * Uses DFS-based algorithm to identify articulation points
+ * 
  */
 void HighwayNetwork::printCriticalTowns() const {
     std::cout << "\nDestruction of any of the following would result in the province becoming\ndisconnected:\n";
     
-    // Maps for tracking DFS information
-    std::unordered_map<Town*, int> discoveryTime;  // When a node was discovered
-    std::unordered_map<Town*, int> low;            // Lowest discovery time reachable
-    std::unordered_map<Town*, Town*> parent;       // Parent in DFS tree
-    std::unordered_set<Town*> articulationPoints;  // Stored articulation points
-    
-    int time = 0;  // Global time counter for DFS
+   
+    std::unordered_map<Town*, int> discoveryTime;
+    std::unordered_map<Town*, int> low;            
+    std::unordered_map<Town*, Town*> parent;      
+    std::unordered_set<Town*> articulationPoints;  
+    int time = 0; 
 
     // Recursive DFS function to find articulation points
     std::function<void(Town*)> dfs = [&](Town* u) {
@@ -307,8 +305,6 @@ void HighwayNetwork::printCriticalTowns() const {
                 low[u] = std::min(low[u], low[v]);
 
                 // Check if u is an articulation point:
-                // 1. U is root of DFS tree and has multiple children
-                // 2. U is not root and low value of one of its children >= discovery time of u
                 if ((parent.find(u) == parent.end() && children > 1) ||
                     (parent.find(u) != parent.end() && low[v] >= discoveryTime[u])) {
                     articulationPoints.insert(u);
